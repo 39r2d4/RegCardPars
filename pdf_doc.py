@@ -3,7 +3,6 @@
 # pip3 install pdfminer.six chardet
 
 import os
-import pickle
 from multiprocessing import Pool
 import re
 import csv
@@ -125,7 +124,6 @@ def pars_filelist(fl):
         if type(text) == list:  # проверяем не пустой ли список (сравнение типов)?
             text.append(x)  # в конец списка добавим путь к файлу
             data.append(text)  # положим результат в список
-    # aa.append(convert_pdf_to_txt(x))
     return data
 
 
@@ -136,23 +134,25 @@ def pars_filelist_map(fl):
     if type(text) == list:  # проверяем не пустой ли список
         text.append(fl)  # в конец списка добавим путь к файлу
         data.append(text)  # положим результат в список
-    # aa.append(convert_pdf_to_txt(x))
     return data
 
 # pickle
 def record_data_in_file(data, file):
     with open(file, 'w', newline='') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter='|',
+        spamwriter = csv.writer(csvfile, delimiter=';',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerow(['модель ккт', 'серийный номер ккт', 'рег номер ккт',
                              'модель ФН', 'ЗН ФН', 'На кого зареган', 'адрес установки ккт',
                              'место установки', 'ОФД', 'дата регистрации в налоговом органе',
                              'расположение файла'])
+
         for x in data:
             if len(x) != 0:
                 print(x)
                 spamwriter.writerow(x)
 
+    #with open('data.pl', 'wb') as f:
+    #    pickle.dump(data, f)
 
 
 def main_wiz(dir: str, mode: int = 1, out: str = 'data.csv'):
@@ -166,6 +166,11 @@ def main_wiz(dir: str, mode: int = 1, out: str = 'data.csv'):
         pdfdata = pool.map(pars_filelist_map, filelist)
         pool.close()
         pool.join()
+        # через pool.map возвращается список в списке, убираем лишнее
+        for x in range(len(pdfdata)):
+            if len(pdfdata[x]) != 0:
+                print(pdfdata[x])
+                pdfdata[x] = pdfdata[x][0]
         record_data_in_file(pdfdata, out)
     else:
         print('!pars file!')
@@ -188,4 +193,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    #main_wiz('./folder', 3)
